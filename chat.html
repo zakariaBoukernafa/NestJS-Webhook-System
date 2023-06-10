@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+    <style>
+      /* Basic styling for the form and chat interface */
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .form-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      input {
+        margin-bottom: 1rem;
+      }
+      #chat {
+        display: none;
+      }
+      #messages {
+        height: 300px;
+        overflow-y: scroll;
+        border: 1px solid #ccc;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <form id="login-form">
+        <input
+          type="text"
+          id="username"
+          placeholder="Enter your username"
+          required
+        />
+        <button type="submit">Sign up</button>
+      </form>
+    </div>
+
+    <div id="chat">
+      <div id="messages"></div>
+      <form id="message-form">
+        <input
+          type="text"
+          id="message"
+          placeholder="Enter your message"
+          required
+        />
+        <input
+          type="text"
+          id="recipient"
+          placeholder="Enter recipient ID"
+          required
+        />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+    <script>
+      const socket = io('http://localhost:3000'); // Replace with your NestJS server URL
+      const loginForm = document.getElementById('login-form');
+      const chat = document.getElementById('chat');
+      const messageForm = document.getElementById('message-form');
+      const messages = document.getElementById('messages');
+      let userId;
+
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        userId = document.getElementById('username').value;
+        loginForm.style.display = 'none';
+        chat.style.display = 'block';
+      });
+
+      messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = document.getElementById('message').value;
+        const recipient = document.getElementById('recipient').value;
+        socket.emit('privateMessage', {
+          sender: userId,
+          content: message,
+          to: recipient,
+        });
+        document.getElementById('message').value = '';
+      });
+
+      socket.on('privateMessage', ({ sender, content, timestamp }) => {
+        const messageElement = document.createElement('div');
+        messageElement.innerHTML = `<strong>${sender}:</strong> ${content} <small>${new Date(
+          timestamp,
+        ).toLocaleTimeString()}</small>`;
+        messages.appendChild(messageElement);
+        messages.scrollTop = messages.scrollHeight;
+      });
+    </script>
+  </body>
+</html>
